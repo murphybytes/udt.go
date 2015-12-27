@@ -1,0 +1,3 @@
+[submodule "vendor/git.code/sf.net/udt"]
+	path = vendor/git.code/sf.net/udt
+	url = http://git.code.sf.net/p/udt/git
