@@ -46,7 +46,7 @@ udt4_project_dir="${script_dir}/vendor/udt/udt4"
 if [ ! -d "${udt4_project_dir}" ]; then
   echo "Missing source code for UDT4 C library, Updating submodules..."
   cd "${script_dir}"
-  git submodule init vendor
+  git submodule update --init
 else
   echo "UDT4 C source code is present."
 fi
