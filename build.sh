@@ -41,11 +41,12 @@ esac
 echo "Building for ${os} ${arch}"
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-udt4_project_dir="${script_dir}/vendor/git.code/sf.net/udt/udt4"
+udt4_project_dir="${script_dir}/vendor/udt/udt4"
 
 if [ ! -d "${udt4_project_dir}" ]; then
-  echo "Missing source code for UDT4 C library. Try git submodule update --recursive"
-  exit 1
+  echo "Missing source code for UDT4 C library, Updating submodules..."
+  cd "${script_dir}"
+  git submodule init vendor
 else
   echo "UDT4 C source code is present."
 fi
@@ -75,18 +76,8 @@ else
 fi
 
 
-ln -s ${udt4_project_dir} "${GOPATH}/."
-
-libpathname='LD_LIBRARY_PATH'
-
-if [ "$os" = 'OSX' ]; then
-  libpathname='DYLD_LIBRARY_PATH'
-fi
-
-
 echo "UDT4 build was successful."
-echo "Set ${libpathname}=${GOPATH}/udt4/src"
-echo "UDT4 header files are in ${GOPATH}/udt4/src"
+
 
 
 
