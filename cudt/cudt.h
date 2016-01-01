@@ -6,6 +6,10 @@
 extern "C" {
 #endif
 
+typedef struct {
+  void* pUDTSOCKET;
+} udt_connection;
+
 int startup(void);
 int cleanup(void);
 
