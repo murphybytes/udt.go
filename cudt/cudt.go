@@ -2,11 +2,16 @@ package cudt
 
 // #cgo CXXFLAGS: -I${SRCDIR}/../vendor/udt/udt4/src
 // #cgo LDFLAGS: -L${SRCDIR}/../vendor/udt/udt4/src -ludt -lstdc++ -lpthread -lm
+// #include "stdlib.h"
 // #include "cudt.h"
 import "C"
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"unsafe"
+)
 
-func startup() (e error) {
+func Startup() (e error) {
 
 	if i, e := C.startup(); e == nil {
 
@@ -18,7 +23,7 @@ func startup() (e error) {
 	return e
 }
 
-func cleanup() (e error) {
+func Cleanup() (e error) {
 
 	if i, e := C.cleanup(); e == nil {
 
@@ -28,4 +33,18 @@ func cleanup() (e error) {
 
 	}
 	return e
+}
+
+func Listen(ipaddr string, port string) (udtPointer unsafe.Pointer, e error) {
+	var result C.struct_udt_result
+	C.udt_listen(C.CString(ipaddr), C.CString(port), &result)
+	if result.errorMsg != nil {
+		e = errors.New(C.GoString(result.errorMsg))
+		C.free(unsafe.Pointer(result.errorMsg))
+
+	}
+
+	udtPointer = result.udtPointer
+	return
+
 }
