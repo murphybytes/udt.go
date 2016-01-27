@@ -27,6 +27,6 @@ func TestListen(t *testing.T) {
 	}
 
 	_, e = Listen("127.0.0.1", "9000")
-	fmt.Printf("Result -> %s\n", e.Error())
-
+	// fmt.Printf("Result -> %s\n", e.Error())
+	fmt.Println("yep")
 }

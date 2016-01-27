@@ -36,8 +36,9 @@ func Cleanup() (e error) {
 }
 
 func Listen(ipaddr string, port string) (udtPointer unsafe.Pointer, e error) {
-	var result C.struct_udt_result
+	var result *C.struct_udt_result
 	C.udt_listen(C.CString(ipaddr), C.CString(port), &result)
+	fmt.Println("got here")
 	if result.errorMsg != nil {
 		e = errors.New(C.GoString(result.errorMsg))
 		C.free(unsafe.Pointer(result.errorMsg))
@@ -45,6 +46,7 @@ func Listen(ipaddr string, port string) (udtPointer unsafe.Pointer, e error) {
 	}
 
 	udtPointer = result.udtPointer
+	fmt.Println("end")
 	return
 
 }
