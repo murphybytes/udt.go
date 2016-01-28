@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"net"
 	"strings"
-	"unsafe"
 
 	"github.com/murphybytes/udt.go/cudt"
 )
 
 // Listener implments net.Listener
 type Listener struct {
-	udtPointer unsafe.Pointer
+	sessionKey int
 }
 
 func Listen(addressString string) (l *Listener, e error) {
@@ -31,7 +30,13 @@ func Listen(addressString string) (l *Listener, e error) {
 		port = parts[1]
 	}
 
-	l, e = cudt.Listen(ipaddr, port)
+	var sessionKey int
+	sessionKey, e = cudt.Listen(ipaddr, port)
+	if e == nil {
+		l = &Listener{
+			sessionKey: sessionKey,
+		}
+	}
 	return
 }
 
@@ -40,6 +45,7 @@ func (l *Listener) Accept() (c Conn, e error) {
 }
 
 func (l *Listener) Close() (c Conn, e error) {
+	cudt.Close(l.sessionKey)
 	return
 }
 

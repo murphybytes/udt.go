@@ -15,6 +15,7 @@ struct udt_result {
 int startup(void);
 int cleanup(void);
 void udt_listen( const char*, const char*, struct udt_result** );
+void udt_close(void*);
 
 
 #ifdef __cplusplus

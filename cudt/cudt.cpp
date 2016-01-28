@@ -25,6 +25,10 @@ extern "C" {
     strcpy(result->errorMsg, msg);
   }
 
+  void udt_close( void* udtSocket) {
+    UDT::close(*(UDTSOCKET*)udtSocket);
+  }
+  
   void udt_listen( const char* ipaddr, const char* port, struct udt_result** result ) {
     *result = (struct udt_result*)malloc(sizeof(udt_result));
 
