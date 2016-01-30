@@ -3,12 +3,13 @@ package udt
 import (
 	"net"
 	"time"
-	"unsafe"
 )
 
 // Conn implements net.Conn
 type Conn struct {
-	udtPointer unsafe.Pointer
+	connectionKey int
+	listener      *Listener
+	remoteAddress string
 }
 
 func (c *Conn) Read(b []byte) (n int, e error) {
@@ -36,5 +37,9 @@ func (c *Conn) SetReadDeadline(t time.Time) (e error) {
 }
 
 func (c *Conn) SetWriteDeadline(t time.Time) (e error) {
+	return e
+}
+
+func (c *Conn) Close() (e error) {
 	return e
 }

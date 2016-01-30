@@ -10,12 +10,14 @@ extern "C" {
 struct udt_result {
   void* udtPointer;
   char* errorMsg;
+  char* addrString;
 } ;
 
 int startup(void);
 int cleanup(void);
 void udt_listen( const char*, const char*, struct udt_result** );
 void udt_close(void*);
+void udt_accept(void* , struct udt_result**);
 
 
 #ifdef __cplusplus

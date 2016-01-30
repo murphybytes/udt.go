@@ -4,13 +4,14 @@
 #include <netdb.h>
 #include <signal.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 #include <udt.h>
 #include "cudt.h"
 
 
 extern "C" {
 
-
+  const int BACKLOG=1024;
 
   int startup(void) {
     return UDT::startup();
@@ -28,40 +29,52 @@ extern "C" {
   void udt_close( void* udtSocket) {
     UDT::close(*(UDTSOCKET*)udtSocket);
   }
-  
+
   void udt_listen( const char* ipaddr, const char* port, struct udt_result** result ) {
     *result = (struct udt_result*)malloc(sizeof(udt_result));
-
-    addrinfo hints;
-    addrinfo* res;
-
-    memset(&hints, 0, sizeof(struct addrinfo));
-    hints.ai_flags = AI_PASSIVE;
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-
-    if( 0 != getaddrinfo(strlen(ipaddr) > 0 ? ipaddr : NULL, port, &hints, &res )) {
-      set_error("Illegal port number or port is busy", *result);
-      return;
-    }
+    memset(*result, 0, sizeof(udt_result));
 
     UDTSOCKET sock;
-    sock = UDT::socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    sock = UDT::socket(AF_INET, SOCK_STREAM, 0);
 
-    if( UDT::ERROR == UDT::bind(sock, res->ai_addr, res->ai_addrlen)) {
+    sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(atoi(port));
+    addr.sin_addr.s_addr = INADDR_ANY;
+    memset(&(addr.sin_zero), '\0', 8);
+
+    if( UDT::ERROR == UDT::bind(sock, (sockaddr*)&addr, sizeof(addr))) {
       set_error(UDT::getlasterror().getErrorMessage(), *result );
       return;
     }
 
-
+    UDT::listen(sock, BACKLOG);
 
     (*result)->udtPointer = (void*)&sock;
-    freeaddrinfo(res);
+
     return;
 
-    // const char* error = "Something broken";
-    // result->errorMsg = (char*)malloc(strlen(error) + 1);
-    // strcpy(result->errorMsg, error );
+  }
+
+  void udt_accept(void* serv, struct udt_result** result ) {
+    *result = (struct udt_result*)malloc(sizeof(udt_result));
+    memset(*result, 0, sizeof(udt_result));
+    
+    int addrlen;
+    sockaddr_in clientaddr;
+
+    UDTSOCKET new_sock = UDT::accept(*(UDTSOCKET*)serv, (sockaddr*)&clientaddr, &addrlen);
+    if(new_sock == UDT::INVALID_SOCK) {
+      set_error(UDT::getlasterror().getErrorMessage(), *result);
+      return;
+    }
+
+    const char* saddr = inet_ntoa(clientaddr.sin_addr);
+    (*result)->addrString = (char*)malloc(strlen(saddr) + 1);
+    strcpy((*result)->addrString, saddr);
+
+    (*result)->udtPointer = (void*)&new_sock;
+    return;
 
   }
 

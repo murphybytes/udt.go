@@ -166,3 +166,30 @@ func Listen(ipaddr string, port string) (sessionKey int, e error) {
 	return
 
 }
+
+// Accept calls through to C UDT accept and takes care of freeing
+// C allocated memory and copying data to Go managed memory
+func Accept(serverKey int) (connectionKey int, addr string, e error) {
+	var result *C.struct_udt_result
+	var serverHnd unsafe.Pointer
+	serverHnd, e = getUDTHandle(serverKey)
+	if e != nil {
+		return
+	}
+
+	C.udt_accept(serverHnd, &result)
+	defer C.free(unsafe.Pointer(result))
+
+	if result.errorMsg != nil {
+		e = errors.New(C.GoString(result.errorMsg))
+		C.free(unsafe.Pointer(result.errorMsg))
+		return
+	}
+
+	addr = C.GoString(result.addrString)
+	C.free(unsafe.Pointer(result.addrString))
+
+	connectionKey = saveUDTHandle(result.udtPointer)
+	return
+
+}
