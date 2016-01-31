@@ -8,7 +8,7 @@ extern "C" {
 
 
 struct udt_result {
-  void* udtPointer;
+  int udtSocket;
   char* errorMsg;
   char* addrString;
 } ;
@@ -16,8 +16,8 @@ struct udt_result {
 int startup(void);
 int cleanup(void);
 void udt_listen( const char*, const char*, struct udt_result** );
-void udt_close(void*);
-void udt_accept(void* , struct udt_result**);
+void udt_close(int);
+void udt_accept(int , struct udt_result**);
 void udt_connect( const char*, const char*, struct udt_result** );
 
 

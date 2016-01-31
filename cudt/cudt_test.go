@@ -3,7 +3,6 @@ package cudt
 import (
 	"fmt"
 	"testing"
-	"unsafe"
 )
 
 func TestInitializationAndShutdown(t *testing.T) {
@@ -30,7 +29,7 @@ func TestSessionManagment(t *testing.T) {
 	type dummy struct {
 		d string
 	}
-	p1 := unsafe.Pointer(&dummy{d: "something"})
+	p1 := 0
 	fmt.Printf("P1 %q\n", p1)
 	k1 := saveUDTHandle(p1)
 	p2, err := getUDTHandle(k1)
@@ -48,7 +47,7 @@ func TestSessionManagment(t *testing.T) {
 	if err.Error() != fmt.Sprintf("No session found for key %d", wrongKey) {
 		t.Fatal("Error message not expected")
 	}
-	p3 := unsafe.Pointer(&dummy{d: "other"})
+	p3 := 2
 	fmt.Printf("P3 %q\n", p3)
 	k2 := saveUDTHandle(p3)
 	if k2 == k1 {

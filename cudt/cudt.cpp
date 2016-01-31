@@ -29,8 +29,8 @@ extern "C" {
     strcpy(result->errorMsg, msg);
   }
 
-  void udt_close( void* udtSocket) {
-    UDT::close(*(UDTSOCKET*)udtSocket);
+  void udt_close( int sock) {
+    UDT::close(sock);
   }
 
   void udt_connect( const char* ipaddr, const char* port, struct udt_result** result ) {
@@ -54,7 +54,7 @@ extern "C" {
       return;
     }
 
-    (*result)->udtPointer = (void*)&sock;
+    (*result)->udtSocket = sock;
 
     cout << "connect returns" << endl;
 
@@ -84,13 +84,13 @@ extern "C" {
 
     UDT::listen(sock, BACKLOG);
     cout << "post listen" << endl;
-    (*result)->udtPointer = (void*)&sock;
+    (*result)->udtSocket = sock;
     cout << "listen returned" << endl;
     return;
 
   }
 
-  void udt_accept(void* serv, struct udt_result** result ) {
+  void udt_accept(int serv, struct udt_result** result ) {
     cout << "Called accept" << endl;
     *result = (struct udt_result*)malloc(sizeof(udt_result));
     memset(*result, 0, sizeof(udt_result));
@@ -98,7 +98,7 @@ extern "C" {
     int addrlen;
     sockaddr_in clientaddr;
 
-    UDTSOCKET new_sock = UDT::accept(*(UDTSOCKET*)serv, (sockaddr*)&clientaddr, &addrlen);
+    UDTSOCKET new_sock = UDT::accept(serv, (sockaddr*)&clientaddr, &addrlen);
     if(new_sock == UDT::INVALID_SOCK) {
       set_error(UDT::getlasterror().getErrorMessage(), *result);
       return;
@@ -108,7 +108,7 @@ extern "C" {
     (*result)->addrString = (char*)malloc(strlen(saddr) + 1);
     strcpy((*result)->addrString, saddr);
 
-    (*result)->udtPointer = (void*)&new_sock;
+    (*result)->udtSocket = new_sock;
     cout << "Accept returns" << endl;
     return;
 

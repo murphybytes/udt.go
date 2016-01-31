@@ -23,14 +23,14 @@ const (
 type request struct {
 	action       action
 	key          int
-	handle       unsafe.Pointer
+	handle       int
 	responseChan chan request
 	ok           bool
 }
 
 var requestChan chan request
 
-func getUDTHandle(key int) (p unsafe.Pointer, e error) {
+func getUDTHandle(key int) (sock int, e error) {
 	req := request{
 		action:       get,
 		key:          key,
@@ -43,16 +43,16 @@ func getUDTHandle(key int) (p unsafe.Pointer, e error) {
 	if !resp.ok {
 		e = fmt.Errorf("No session found for key %d", key)
 	} else {
-		p = resp.handle
+		sock = resp.handle
 	}
 
 	return
 }
 
-func saveUDTHandle(p unsafe.Pointer) int {
+func saveUDTHandle(sock int) int {
 	req := request{
 		action:       put,
-		handle:       p,
+		handle:       sock,
 		responseChan: make(chan request),
 	}
 	requestChan <- req
@@ -90,7 +90,7 @@ func Startup() (e error) {
 		e = fmt.Errorf("UDT Startup failed with error %d", udtResponse)
 	}
 
-	sessions := map[int]unsafe.Pointer{}
+	sessions := map[int]int{}
 	var nextKey int
 
 	go func() {
@@ -145,7 +145,7 @@ func Close(sessionKey int) {
 	handle, err := getUDTHandle(sessionKey)
 	if err != nil {
 		deleteUDTHandle(sessionKey)
-		C.udt_close(handle)
+		C.udt_close(C.int(handle))
 	}
 
 }
@@ -168,7 +168,7 @@ func Listen(ipaddr string, port string) (sessionKey int, e error) {
 		return
 	}
 	fmt.Println("saving handle")
-	sessionKey = saveUDTHandle(result.udtPointer)
+	sessionKey = saveUDTHandle(int(result.udtSocket))
 	fmt.Println("handle saved")
 	return
 
@@ -193,7 +193,7 @@ func Dial(ipaddr string, port string) (clientKey int, e error) {
 		return
 	}
 
-	clientKey = saveUDTHandle(result.udtPointer)
+	clientKey = saveUDTHandle(int(result.udtSocket))
 
 	return
 }
@@ -203,13 +203,13 @@ func Dial(ipaddr string, port string) (clientKey int, e error) {
 func Accept(serverKey int) (connectionKey int, addr string, e error) {
 	fmt.Println("Called accept")
 	var result *C.struct_udt_result
-	var serverHnd unsafe.Pointer
+	var serverHnd int
 	serverHnd, e = getUDTHandle(serverKey)
 	if e != nil {
 		return
 	}
 
-	C.udt_accept(serverHnd, &result)
+	C.udt_accept(C.int(serverHnd), &result)
 	defer C.free(unsafe.Pointer(result))
 
 	fmt.Println("udt_accept returns")
@@ -223,7 +223,7 @@ func Accept(serverKey int) (connectionKey int, addr string, e error) {
 	addr = C.GoString(result.addrString)
 	C.free(unsafe.Pointer(result.addrString))
 
-	connectionKey = saveUDTHandle(result.udtPointer)
+	connectionKey = saveUDTHandle(int(result.udtSocket))
 	fmt.Printf("Accept returns key %d\n", connectionKey)
 	return
 
