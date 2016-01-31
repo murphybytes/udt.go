@@ -3,6 +3,8 @@ package udt
 import (
 	"net"
 	"time"
+
+	"github.com/murphybytes/udt.go/cudt"
 )
 
 // Conn implements net.Conn
@@ -41,5 +43,6 @@ func (c *Conn) SetWriteDeadline(t time.Time) (e error) {
 }
 
 func (c *Conn) Close() (e error) {
+	cudt.Close(c.connectionKey)
 	return e
 }

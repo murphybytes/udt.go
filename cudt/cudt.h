@@ -18,6 +18,8 @@ int cleanup(void);
 void udt_listen( const char*, const char*, struct udt_result** );
 void udt_close(void*);
 void udt_accept(void* , struct udt_result**);
+void udt_connect( const char*, const char*, struct udt_result** );
+
 
 
 #ifdef __cplusplus

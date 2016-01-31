@@ -7,6 +7,9 @@
 #include <arpa/inet.h>
 #include <udt.h>
 #include "cudt.h"
+#include <iostream>
+
+using namespace std;
 
 
 extern "C" {
@@ -30,7 +33,38 @@ extern "C" {
     UDT::close(*(UDTSOCKET*)udtSocket);
   }
 
+  void udt_connect( const char* ipaddr, const char* port, struct udt_result** result ) {
+    cout << "called connect with " << ipaddr << " " << port << endl;
+    *result = (struct udt_result*)malloc(sizeof(udt_result));
+    memset(*result, 0, sizeof(udt_result));
+
+    UDTSOCKET sock;
+    sock = UDT::socket(AF_INET, SOCK_STREAM, 0);
+
+    sockaddr_in serv_addr;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(atoi(port));
+    inet_pton(AF_INET, ipaddr, &serv_addr.sin_addr);
+
+    memset(&(serv_addr.sin_zero), '\0', 8);
+
+    // connect to the server, implict bind
+    if (UDT::ERROR == UDT::connect(sock, (sockaddr*)&serv_addr, sizeof(serv_addr))) {
+      set_error( UDT::getlasterror().getErrorMessage(), *result );
+      return;
+    }
+
+    (*result)->udtPointer = (void*)&sock;
+
+    cout << "connect returns" << endl;
+
+    return;
+
+  }
+
   void udt_listen( const char* ipaddr, const char* port, struct udt_result** result ) {
+    cout << "called listen with " << ipaddr << " " << port << endl;
+
     *result = (struct udt_result*)malloc(sizeof(udt_result));
     memset(*result, 0, sizeof(udt_result));
 
@@ -49,17 +83,18 @@ extern "C" {
     }
 
     UDT::listen(sock, BACKLOG);
-
+    cout << "post listen" << endl;
     (*result)->udtPointer = (void*)&sock;
-
+    cout << "listen returned" << endl;
     return;
 
   }
 
   void udt_accept(void* serv, struct udt_result** result ) {
+    cout << "Called accept" << endl;
     *result = (struct udt_result*)malloc(sizeof(udt_result));
     memset(*result, 0, sizeof(udt_result));
-    
+
     int addrlen;
     sockaddr_in clientaddr;
 
@@ -74,6 +109,7 @@ extern "C" {
     strcpy((*result)->addrString, saddr);
 
     (*result)->udtPointer = (void*)&new_sock;
+    cout << "Accept returns" << endl;
     return;
 
   }

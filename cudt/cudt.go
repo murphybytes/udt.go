@@ -153,7 +153,38 @@ func Close(sessionKey int) {
 // Listen opens a UDT socket for listening
 func Listen(ipaddr string, port string) (sessionKey int, e error) {
 	var result *C.struct_udt_result
-	C.udt_listen(C.CString(ipaddr), C.CString(port), &result)
+	cipaddr := C.CString(ipaddr)
+	defer C.free(unsafe.Pointer(cipaddr))
+	cport := C.CString(port)
+	defer C.free(unsafe.Pointer(cport))
+
+	C.udt_listen(cipaddr, cport, &result)
+	fmt.Println("udt_listen called")
+	defer C.free(unsafe.Pointer(result))
+
+	if result.errorMsg != nil {
+		e = errors.New(C.GoString(result.errorMsg))
+		C.free(unsafe.Pointer(result.errorMsg))
+		return
+	}
+	fmt.Println("saving handle")
+	sessionKey = saveUDTHandle(result.udtPointer)
+	fmt.Println("handle saved")
+	return
+
+}
+
+// Dial calls handles interface between Go and C. It returns a
+// clientKey which is used to reference the connection socket
+// returned from UDT C runtime.
+func Dial(ipaddr string, port string) (clientKey int, e error) {
+	var result *C.struct_udt_result
+	cipaddr := C.CString(ipaddr)
+	defer C.free(unsafe.Pointer(cipaddr))
+	cport := C.CString(port)
+	defer C.free(unsafe.Pointer(cport))
+
+	C.udt_connect(cipaddr, cport, &result)
 	defer C.free(unsafe.Pointer(result))
 
 	if result.errorMsg != nil {
@@ -162,14 +193,15 @@ func Listen(ipaddr string, port string) (sessionKey int, e error) {
 		return
 	}
 
-	sessionKey = saveUDTHandle(result.udtPointer)
-	return
+	clientKey = saveUDTHandle(result.udtPointer)
 
+	return
 }
 
 // Accept calls through to C UDT accept and takes care of freeing
 // C allocated memory and copying data to Go managed memory
 func Accept(serverKey int) (connectionKey int, addr string, e error) {
+	fmt.Println("Called accept")
 	var result *C.struct_udt_result
 	var serverHnd unsafe.Pointer
 	serverHnd, e = getUDTHandle(serverKey)
@@ -179,6 +211,8 @@ func Accept(serverKey int) (connectionKey int, addr string, e error) {
 
 	C.udt_accept(serverHnd, &result)
 	defer C.free(unsafe.Pointer(result))
+
+	fmt.Println("udt_accept returns")
 
 	if result.errorMsg != nil {
 		e = errors.New(C.GoString(result.errorMsg))
@@ -190,6 +224,7 @@ func Accept(serverKey int) (connectionKey int, addr string, e error) {
 	C.free(unsafe.Pointer(result.addrString))
 
 	connectionKey = saveUDTHandle(result.udtPointer)
+	fmt.Printf("Accept returns key %d\n", connectionKey)
 	return
 
 }

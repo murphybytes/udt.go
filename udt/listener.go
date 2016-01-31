@@ -3,7 +3,6 @@ package udt
 import (
 	"fmt"
 	"net"
-	"strings"
 
 	"github.com/murphybytes/udt.go/cudt"
 )
@@ -15,24 +14,16 @@ type Listener struct {
 }
 
 func Listen(addressString string) (l net.Listener, e error) {
-	parts := strings.Split(addressString, ":")
-	if len(parts) > 2 || len(parts) < 1 {
-		e = fmt.Errorf("Address string invalid %s", addressString)
+	var host, port string
+	host, port, e = net.SplitHostPort(addressString)
+
+	if e != nil {
 		return
 	}
 
-	var ipaddr string
-	var port string
-
-	if len(parts) < 2 {
-		port = parts[0]
-	} else {
-		ipaddr = parts[0]
-		port = parts[1]
-	}
-
 	var sessionKey int
-	sessionKey, e = cudt.Listen(ipaddr, port)
+	sessionKey, e = cudt.Listen(host, port)
+	fmt.Printf("listen returned key %d\n", sessionKey)
 	if e == nil {
 		l = &Listener{
 			sessionKey: sessionKey,
