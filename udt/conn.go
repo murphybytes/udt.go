@@ -19,7 +19,11 @@ func (c *Conn) Read(b []byte) (n int, e error) {
 }
 
 func (c *Conn) Write(b []byte) (n int, e error) {
-	return n, e
+	e = cudt.Write(c.connectionKey, b)
+	if e != nil {
+		return 0, e
+	}
+	return len(b), nil
 }
 
 func (c *Conn) LocalAddr() (a net.Addr) {

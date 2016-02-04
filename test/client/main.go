@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/murphybytes/udt.go/cudt"
 	"github.com/murphybytes/udt.go/udt"
 )
 
 func main() {
-	cudt.Startup()
-	defer cudt.Cleanup()
+	udt.Startup()
+	defer udt.Cleanup()
 	fmt.Println("Starting client test.")
 	conn, e := udt.Dial("127.0.0.1:9876")
 

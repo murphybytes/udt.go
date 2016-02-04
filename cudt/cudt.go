@@ -159,7 +159,7 @@ func Listen(ipaddr string, port string) (sessionKey int, e error) {
 	defer C.free(unsafe.Pointer(cport))
 
 	C.udt_listen(cipaddr, cport, &result)
-	fmt.Println("udt_listen called")
+
 	defer C.free(unsafe.Pointer(result))
 
 	if result.errorMsg != nil {
@@ -167,9 +167,9 @@ func Listen(ipaddr string, port string) (sessionKey int, e error) {
 		C.free(unsafe.Pointer(result.errorMsg))
 		return
 	}
-	fmt.Println("saving handle")
+
 	sessionKey = saveUDTHandle(int(result.udtSocket))
-	fmt.Println("handle saved")
+
 	return
 
 }
@@ -201,7 +201,7 @@ func Dial(ipaddr string, port string) (clientKey int, e error) {
 // Accept calls through to C UDT accept and takes care of freeing
 // C allocated memory and copying data to Go managed memory
 func Accept(serverKey int) (connectionKey int, addr string, e error) {
-	fmt.Println("Called accept")
+
 	var result *C.struct_udt_result
 	var serverHnd int
 	serverHnd, e = getUDTHandle(serverKey)
@@ -211,8 +211,6 @@ func Accept(serverKey int) (connectionKey int, addr string, e error) {
 
 	C.udt_accept(C.int(serverHnd), &result)
 	defer C.free(unsafe.Pointer(result))
-
-	fmt.Println("udt_accept returns")
 
 	if result.errorMsg != nil {
 		e = errors.New(C.GoString(result.errorMsg))
@@ -224,7 +222,31 @@ func Accept(serverKey int) (connectionKey int, addr string, e error) {
 	C.free(unsafe.Pointer(result.addrString))
 
 	connectionKey = saveUDTHandle(int(result.udtSocket))
-	fmt.Printf("Accept returns key %d\n", connectionKey)
+
+	return
+
+}
+
+// Write sends contents of buffer to network reciever
+func Write(connectionKey int, buffer []byte) (e error) {
+	var result *C.struct_udt_result
+	var connectionHnd int
+	connectionHnd, e = getUDTHandle(connectionKey)
+
+	if e != nil {
+		return
+	}
+
+	len := C.int(len(buffer))
+
+	C.udt_send(C.int(connectionHnd), (*C.char)(unsafe.Pointer(&buffer[0])), len, &result)
+	defer C.free(unsafe.Pointer(result))
+
+	if result.errorMsg != nil {
+		e = errors.New(C.GoString(result.errorMsg))
+		C.free(unsafe.Pointer(result.errorMsg))
+	}
+
 	return
 
 }

@@ -19,6 +19,9 @@ void udt_listen( const char*, const char*, struct udt_result** );
 void udt_close(int);
 void udt_accept(int , struct udt_result**);
 void udt_connect( const char*, const char*, struct udt_result** );
+void udt_send( int, const char*, int, struct udt_result** );
+void udt_recv( int, char**, int*, struct udt_result** );
+
 
 
 

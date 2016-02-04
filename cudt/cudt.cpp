@@ -15,6 +15,7 @@ using namespace std;
 extern "C" {
 
   const int BACKLOG=1024;
+  const int RCVBUFFERSIZE=100000;
 
   int startup(void) {
     return UDT::startup();
@@ -24,7 +25,8 @@ extern "C" {
     return UDT::cleanup();
   }
 
-  void set_error( const char* msg, struct udt_result* result ) {
+  void set_error( struct udt_result* result ) {
+    const char* msg = UDT::getlasterror().getErrorMessage();
     result->errorMsg = (char*)malloc(strlen(msg) + 1);
     strcpy(result->errorMsg, msg);
   }
@@ -50,7 +52,7 @@ extern "C" {
 
     // connect to the server, implict bind
     if (UDT::ERROR == UDT::connect(sock, (sockaddr*)&serv_addr, sizeof(serv_addr))) {
-      set_error( UDT::getlasterror().getErrorMessage(), *result );
+      set_error( *result );
       return;
     }
 
@@ -78,20 +80,18 @@ extern "C" {
     memset(&(addr.sin_zero), '\0', 8);
 
     if( UDT::ERROR == UDT::bind(sock, (sockaddr*)&addr, sizeof(addr))) {
-      set_error(UDT::getlasterror().getErrorMessage(), *result );
+      set_error( *result );
       return;
     }
 
     UDT::listen(sock, BACKLOG);
-    cout << "post listen" << endl;
     (*result)->udtSocket = sock;
-    cout << "listen returned" << endl;
     return;
 
   }
 
   void udt_accept(int serv, struct udt_result** result ) {
-    cout << "Called accept" << endl;
+    cout << "Called accept server socket -> " << serv << endl;
     *result = (struct udt_result*)malloc(sizeof(udt_result));
     memset(*result, 0, sizeof(udt_result));
 
@@ -100,7 +100,7 @@ extern "C" {
 
     UDTSOCKET new_sock = UDT::accept(serv, (sockaddr*)&clientaddr, &addrlen);
     if(new_sock == UDT::INVALID_SOCK) {
-      set_error(UDT::getlasterror().getErrorMessage(), *result);
+      set_error(*result);
       return;
     }
 
@@ -109,8 +109,65 @@ extern "C" {
     strcpy((*result)->addrString, saddr);
 
     (*result)->udtSocket = new_sock;
-    cout << "Accept returns" << endl;
     return;
+
+  }
+
+  void udt_send( int sock, const char* buffer, int len, struct udt_result** result ) {
+    *result = (struct udt_result*)malloc(sizeof(udt_result));
+    memset(*result, 0, sizeof(udt_result));
+
+    int this_send = 0;
+    int sent = 0;
+
+    while( sent < len ) {
+      this_send = UDT::send(sock, buffer + sent, len - sent, 0 );
+
+      if(UDT::ERROR == this_send ) {
+        set_error(*result);
+        return;
+      }
+
+      sent += this_send;
+    }
+  }
+
+  void udt_recv( int sock, char** buffer, int* bytes_read, struct udt_result** result ) {
+    *result = (struct udt_result*)malloc(sizeof(udt_result));
+
+    memset(*result, 0, sizeof(udt_result));
+
+    *bytes_read = 0;
+    *buffer = NULL;
+    int recv_buffer_size = RCVBUFFERSIZE;
+    char* data = (char*)malloc(RCVBUFFERSIZE);
+
+     int total_read_size = 0;
+     int read_size = 0;
+
+     while(true) {
+       if(UDT::ERROR == (read_size = UDT::recv(sock, data + total_read_size, recv_buffer_size - total_read_size, 0))) {
+         set_error(*result);
+         free(data);
+         return;
+       }
+
+       total_read_size += read_size;
+
+       if(total_read_size < recv_buffer_size) {
+         // we've emptied the buffer
+         break;
+       }
+
+       // if we get here, increase the size of the buffer to read more
+       recv_buffer_size += RCVBUFFERSIZE;
+       data = (char*)realloc(data,recv_buffer_size);
+
+     }
+
+     // data freed in caller
+     *buffer = data;
+     *bytes_read = total_read_size;
 
   }
 

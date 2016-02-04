@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/murphybytes/udt.go/cudt"
 	"github.com/murphybytes/udt.go/udt"
 )
 
 func main() {
-	cudt.Startup()
-	defer cudt.Cleanup()
+	udt.Startup()
+	defer udt.Cleanup()
 	fmt.Println("Starting server test.")
 
 	l, e := udt.Listen("127.0.0.1:9876")
@@ -19,9 +18,9 @@ func main() {
 		os.Exit(1)
 	}
 	defer l.Close()
-	fmt.Println("Pre accept")
+
 	conn, e := l.Accept()
-	fmt.Println("post accept")
+
 	if e != nil {
 		fmt.Printf("Accept failed: %s\n", e.Error())
 		os.Exit(1)
