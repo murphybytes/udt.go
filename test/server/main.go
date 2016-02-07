@@ -28,5 +28,12 @@ func main() {
 
 	defer conn.Close()
 
-	fmt.Println("Success")
+	buffer := make([]byte, 20)
+	_, e = conn.Read(buffer)
+	if e != nil {
+		fmt.Printf("Read failed with %s\n", e.Error())
+		os.Exit(1)
+	}
+
+	fmt.Printf("Success. We got %s\n", string(buffer))
 }

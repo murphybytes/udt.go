@@ -227,8 +227,35 @@ func Accept(serverKey int) (connectionKey int, addr string, e error) {
 
 }
 
+func Read(connectionKey int, buffer []byte) (read int, e error) {
+	var result *C.struct_udt_result
+
+	var bytes_read C.int
+	var connectionHnd int
+	connectionHnd, e = getUDTHandle(connectionKey)
+
+	if e != nil {
+		return
+	}
+
+	C.udt_recv(C.int(connectionHnd), (*C.char)(unsafe.Pointer(&buffer[0])), C.int(len(buffer)), &bytes_read, &result)
+	defer C.free(unsafe.Pointer(result))
+
+	if result.errorMsg != nil {
+		e = errors.New(C.GoString(result.errorMsg))
+		C.free(unsafe.Pointer(result.errorMsg))
+		return
+	}
+
+	read = int(bytes_read)
+
+	fmt.Printf("Response '%s' bytes read %d\n", string(buffer), read)
+
+	return read, e
+}
+
 // Write sends contents of buffer to network reciever
-func Write(connectionKey int, buffer []byte) (e error) {
+func Write(connectionKey int, buffer []byte) (written int, e error) {
 	var result *C.struct_udt_result
 	var connectionHnd int
 	connectionHnd, e = getUDTHandle(connectionKey)
@@ -238,8 +265,9 @@ func Write(connectionKey int, buffer []byte) (e error) {
 	}
 
 	len := C.int(len(buffer))
+	var cwritten C.int
 
-	C.udt_send(C.int(connectionHnd), (*C.char)(unsafe.Pointer(&buffer[0])), len, &result)
+	C.udt_send(C.int(connectionHnd), (*C.char)(unsafe.Pointer(&buffer[0])), len, &cwritten, &result)
 	defer C.free(unsafe.Pointer(result))
 
 	if result.errorMsg != nil {
@@ -247,6 +275,6 @@ func Write(connectionKey int, buffer []byte) (e error) {
 		C.free(unsafe.Pointer(result.errorMsg))
 	}
 
-	return
+	return int(cwritten), e
 
 }

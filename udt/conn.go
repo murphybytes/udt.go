@@ -1,6 +1,7 @@
 package udt
 
 import (
+	"fmt"
 	"net"
 	"time"
 
@@ -15,15 +16,20 @@ type Conn struct {
 }
 
 func (c *Conn) Read(b []byte) (n int, e error) {
-	return n, e
-}
-
-func (c *Conn) Write(b []byte) (n int, e error) {
-	e = cudt.Write(c.connectionKey, b)
+	n, e = cudt.Read(c.connectionKey, b)
+	fmt.Printf("READ: %s\n", string(b))
 	if e != nil {
 		return 0, e
 	}
-	return len(b), nil
+	return n, nil
+}
+
+func (c *Conn) Write(b []byte) (n int, e error) {
+	n, e = cudt.Write(c.connectionKey, b)
+	if e != nil {
+		return 0, e
+	}
+	return
 }
 
 func (c *Conn) LocalAddr() (a net.Addr) {

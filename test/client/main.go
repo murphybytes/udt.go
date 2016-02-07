@@ -19,6 +19,13 @@ func main() {
 	}
 
 	defer conn.Close()
+	var n int
+	n, e = conn.Write([]byte("Hello World!"))
 
-	fmt.Println("Dial succeeds.")
+	if e != nil {
+		fmt.Printf("Write fails with %s\n", e.Error())
+		os.Exit(1)
+	}
+	fmt.Printf("Wrote %d bytes to sock\n", n)
+	fmt.Println("Client succeeds. ")
 }

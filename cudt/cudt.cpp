@@ -113,15 +113,17 @@ extern "C" {
 
   }
 
-  void udt_send( int sock, const char* buffer, int len, struct udt_result** result ) {
+  void udt_send( int sock, const char* buffer, int buff_cap, int* bytes_sent, struct udt_result** result ) {
     *result = (struct udt_result*)malloc(sizeof(udt_result));
     memset(*result, 0, sizeof(udt_result));
+    *bytes_sent = 0;
 
     int this_send = 0;
     int sent = 0;
 
-    while( sent < len ) {
-      this_send = UDT::send(sock, buffer + sent, len - sent, 0 );
+
+    while( sent < buff_cap ) {
+      this_send = UDT::send(sock, buffer + sent, buff_cap - sent, 0 );
 
       if(UDT::ERROR == this_send ) {
         set_error(*result);
@@ -130,45 +132,23 @@ extern "C" {
 
       sent += this_send;
     }
+
+    *bytes_sent = sent;
+
   }
 
-  void udt_recv( int sock, char** buffer, int* bytes_read, struct udt_result** result ) {
-    *result = (struct udt_result*)malloc(sizeof(udt_result));
+  void udt_recv( int sock, char* buffer, int buff_cap, int* bytes_read, struct
+    udt_result** result ) { *result = (struct udt_result*)malloc(sizeof(udt_result));
 
     memset(*result, 0, sizeof(udt_result));
 
     *bytes_read = 0;
-    *buffer = NULL;
-    int recv_buffer_size = RCVBUFFERSIZE;
-    char* data = (char*)malloc(RCVBUFFERSIZE);
 
-     int total_read_size = 0;
-     int read_size = 0;
+    if( UDT::ERROR == (*bytes_read = UDT::recv(sock, buffer, buff_cap, 0 ))){
+      set_error(*result);
+      return;
+    }
 
-     while(true) {
-       if(UDT::ERROR == (read_size = UDT::recv(sock, data + total_read_size, recv_buffer_size - total_read_size, 0))) {
-         set_error(*result);
-         free(data);
-         return;
-       }
-
-       total_read_size += read_size;
-
-       if(total_read_size < recv_buffer_size) {
-         // we've emptied the buffer
-         break;
-       }
-
-       // if we get here, increase the size of the buffer to read more
-       recv_buffer_size += RCVBUFFERSIZE;
-       data = (char*)realloc(data,recv_buffer_size);
-
-     }
-
-     // data freed in caller
-     *buffer = data;
-     *bytes_read = total_read_size;
 
   }
-
 }
