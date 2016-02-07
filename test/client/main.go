@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 
+	"github.com/murphybytes/udt.go/test/helper"
 	"github.com/murphybytes/udt.go/udt"
 )
 
 func main() {
+	cla := helper.NewCommandLineArgs()
 	udt.Startup()
 	defer udt.Cleanup()
-	fmt.Println("Starting client test.")
-	conn, e := udt.Dial("127.0.0.1:9876")
+
+	conn, e := udt.Dial(cla.ServerAddress)
 
 	if e != nil {
 		fmt.Printf("Dial fails with %s\n", e.Error())
@@ -19,13 +22,30 @@ func main() {
 	}
 
 	defer conn.Close()
-	var n int
-	n, e = conn.Write([]byte("Hello World!"))
 
+	writer := bufio.NewWriter(conn)
+	writebuff := []byte{}
+	writebuff = append(writebuff, []byte(cla.TestBuffer)...)
+	writebuff = append(writebuff, helper.ETX)
+
+	_, e = writer.Write(writebuff)
 	if e != nil {
-		fmt.Printf("Write fails with %s\n", e.Error())
+		fmt.Printf("Client write fails %s\n", e.Error())
 		os.Exit(1)
 	}
-	fmt.Printf("Wrote %d bytes to sock\n", n)
-	fmt.Println("Client succeeds. ")
+
+	e = writer.Flush()
+
+	reader := bufio.NewReader(conn)
+
+	readbuff, e := reader.ReadBytes(helper.ETX)
+
+	fmt.Println(string(readbuff))
+
+	if string(writebuff) != string(readbuff) {
+		fmt.Printf("GOT: %s\n", string(readbuff))
+		fmt.Printf("EXPECTED: %s\n", string(writebuff))
+		os.Exit(1)
+	}
+
 }

@@ -114,6 +114,7 @@ extern "C" {
   }
 
   void udt_send( int sock, const char* buffer, int buff_cap, int* bytes_sent, struct udt_result** result ) {
+
     *result = (struct udt_result*)malloc(sizeof(udt_result));
     memset(*result, 0, sizeof(udt_result));
     *bytes_sent = 0;

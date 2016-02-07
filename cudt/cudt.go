@@ -227,10 +227,12 @@ func Accept(serverKey int) (connectionKey int, addr string, e error) {
 
 }
 
+// Read receives bytes from a socket.  Returns the number of
+// bytes read, or an error.
 func Read(connectionKey int, buffer []byte) (read int, e error) {
 	var result *C.struct_udt_result
 
-	var bytes_read C.int
+	var bytesRead C.int
 	var connectionHnd int
 	connectionHnd, e = getUDTHandle(connectionKey)
 
@@ -238,7 +240,7 @@ func Read(connectionKey int, buffer []byte) (read int, e error) {
 		return
 	}
 
-	C.udt_recv(C.int(connectionHnd), (*C.char)(unsafe.Pointer(&buffer[0])), C.int(len(buffer)), &bytes_read, &result)
+	C.udt_recv(C.int(connectionHnd), (*C.char)(unsafe.Pointer(&buffer[0])), C.int(len(buffer)), &bytesRead, &result)
 	defer C.free(unsafe.Pointer(result))
 
 	if result.errorMsg != nil {
@@ -247,14 +249,15 @@ func Read(connectionKey int, buffer []byte) (read int, e error) {
 		return
 	}
 
-	read = int(bytes_read)
+	read = int(bytesRead)
 
 	fmt.Printf("Response '%s' bytes read %d\n", string(buffer), read)
 
 	return read, e
 }
 
-// Write sends contents of buffer to network reciever
+// Write sends contents of buffer to a socket. Returns the number of
+// bytes written to a socket or an error.
 func Write(connectionKey int, buffer []byte) (written int, e error) {
 	var result *C.struct_udt_result
 	var connectionHnd int
