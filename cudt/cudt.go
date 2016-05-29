@@ -130,7 +130,7 @@ func Cleanup() (e error) {
 	close(req.responseChan)
 	requestChan = nil
 
-	if i, e := C.cleanup(); e == nil {
+	if i, err := C.cleanup(); err == nil {
 
 		if i != 0 {
 			e = fmt.Errorf("UDT Cleanup failed")
@@ -250,8 +250,6 @@ func Read(connectionKey int, buffer []byte) (read int, e error) {
 	}
 
 	read = int(bytesRead)
-
-	fmt.Printf("Response '%s' bytes read %d\n", string(buffer), read)
 
 	return read, e
 }
