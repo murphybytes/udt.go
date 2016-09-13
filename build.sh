@@ -41,15 +41,8 @@ esac
 echo "Building for ${os} ${arch}"
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-udt4_project_dir="${script_dir}/vendor/udt/udt4"
+udt4_project_dir="${script_dir}/vendor/udt"
 
-if [ ! -d "${udt4_project_dir}" ]; then
-  echo "Missing source code for UDT4 C library, Updating submodules..."
-  cd "${script_dir}"
-  git submodule update --init
-else
-  echo "UDT4 C source code is present."
-fi
 
 current=$(pwd)
 
